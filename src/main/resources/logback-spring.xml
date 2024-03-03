@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Include original spring files -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty name="team" scope="context" source="myapplication.author" defaultValue="-"/>
+
+    <springProfile name="dev,test,integration-test,integrationTest">
+        <springProperty name="consoleLogLevel" source="logging.console.level" defaultValue="INFO"/>
+
+        <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+            <neverBlock>true</neverBlock>
+            <!-- The “CONSOLE” appender is defined in the file "org/springframework/boot/logging/logback/console-appender.xml"
+            and is part of the default logging configuration provided by spring-boot. -->
+            <appender-ref ref="CONSOLE"/>
+        </appender>
+
+        <root level="${consoleLogLevel}">
+            <appender-ref ref="ASYNC_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="k8s">
+        <!-- Define a new appender -->
+        <appender name="CONSOLE-JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <arguments>
+                        <fieldName>context</fieldName>
+                    </arguments>
+                    <!-- change the encoder in order to achieve JSON formatted logs.  -->
+                    <pattern>
+                        <pattern>
+                            {
+                            "date": "%date{yyyy-MM-dd'T'HH:mm:ss.SSSZZ}",
+                            "priority": "%level",
+                            "pid": "${PID:- }",
+                            "thread": "%t",
+                            "logger": "%logger",
+                            "message": "%.-10000msg",
+                            "stacktrace": "%.-10000throwable",
+                            "team": "%property{team}"
+                            }
+                        </pattern>
+                    </pattern>
+                    <!-- to achieve structured logging we use the library logstash-logback-encoder which provides logback encoders, layouts,
+                    and appenders to log in JSON and other formats supported by Jackson.  -->
+                    <mdc>net.logstash.logback.composite.loggingevent.MdcJsonProvider</mdc>
+                </providers>
+            </encoder>
+        </appender>
+
+        <appender name="ASYNC_CONSOLE_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="CONSOLE-JSON"/>
+        </appender>
+        <logger name="com.facuramallo" level="INFO"/>
+        <root level="INFO">
+            <appender-ref ref="ASYNC_CONSOLE_JSON"/>
+        </root>
+    </springProfile>
+</configuration>
