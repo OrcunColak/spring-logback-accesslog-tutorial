@@ -53,5 +53,7 @@ directory.
 To enable logback-classic functionality but in the scope of HTTP access logging, we need to use the logback-access
 module
 that integrates with Servlet containers such as Jetty or Tomcat.
+
 The easiest way to configure logback-acces in our Spring-Boot application is to use the
-logback-access-spring-boot-starter
+logback-access-spring-boot-starter. This starter uses the configuration file specified in application.yaml which is
+logback-access-spring.xml for this project
